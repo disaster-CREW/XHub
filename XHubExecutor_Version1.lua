@@ -1,4 +1,3 @@
-loadstring([[
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
@@ -729,4 +728,3 @@ for _, player in pairs(Players:GetPlayers()) do
 end
 
 print("[X Hub] System initialized!")
-]]) ()
