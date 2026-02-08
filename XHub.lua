@@ -172,6 +172,12 @@ local function createPage(name)
     page.BackgroundTransparency = 1
     page.ScrollBarThickness = 4
     page.Visible = false
+
+    -- REQUIRED FIX
+    page.Active = true
+    page.ScrollingEnabled = true
+    page.ClipsDescendants = false
+
     page.Parent = pageHolder
     pages[name] = page
     return page
@@ -183,6 +189,7 @@ local function switchPage(name)
     end
     pages[name].Visible = true
 end
+
 
 -- TAB CREATOR
 local function makeTab(name, order)
@@ -229,12 +236,212 @@ end
 makeTab("Basic", 1)
 makeTab("Trolling", 2)
 makeTab("Fun", 3)
-makeTab("Settings", 4, "⚙️") -- gear emoji here
+makeTab("Visuals",4)
+makeTab("Settings",5, "⚙️") -- gear emoji here
+
+local function makeCard(parent, height)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, -20, 0, height or 80)
+    card.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    card.Position = UDim2.new(0, 10, 0, #parent:GetChildren() * 90)
+    card.Parent = parent
+
+    local corner = Instance.new("UICorner", card)
+    corner.CornerRadius = UDim.new(0, 8)
+
+    return card
+end
+
+local function makeToggle(card, text, default, callback)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = card
+
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0, 60, 0, 28)
+    toggle.Position = UDim2.new(1, -70, 0.5, -14)
+    toggle.BackgroundColor3 = default and Color3.fromRGB(120, 200, 120) or Color3.fromRGB(80, 80, 80)
+    toggle.Text = default and "ON" or "OFF"
+    toggle.Font = Enum.Font.GothamBold
+    toggle.TextSize = 14
+    toggle.TextColor3 = Color3.fromRGB(0, 0, 0)
+    toggle.Parent = card
+
+    Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 6)
+
+    local state = default
+
+    toggle.MouseButton1Click:Connect(function()
+        state = not state
+        toggle.Text = state and "ON" or "OFF"
+        toggle.BackgroundColor3 = state and Color3.fromRGB(120, 200, 120) or Color3.fromRGB(80, 80, 80)
+        callback(state)
+    end)
+end
+
+local function makeSlider(card, text, min, max, default, callback)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, 5)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = card
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(1, -20, 0, 2)
+    bar.Position = UDim2.new(0, 10, 0, 40)
+    bar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    bar.Parent = card
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 3)
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 10, 0, 10)
+    knob.BackgroundColor3 = Color3.fromRGB(180, 90, 255)
+    knob.Parent = bar
+    Instance.new("UICorner", knob).CornerRadius = UDim.new(0, 7)
+
+    local function setFromAlpha(alpha)
+        alpha = math.clamp(alpha, 0, 1)
+        knob.Position = UDim2.new(alpha, -7, 0.5, -7)
+        local value = min + (max - min) * alpha
+        callback(value)
+    end
+
+    -- initial position
+    local initAlpha = (default - min) / (max - min)
+    setFromAlpha(initAlpha)
+
+    local dragging = false
+    local UIS = game:GetService("UserInputService")
+
+    local function beginDrag(input)
+        dragging = true
+    end
+
+    local function endDrag(input)
+        dragging = false
+    end
+
+    knob.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            beginDrag(input)
+        end
+    end)
+
+    knob.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            endDrag(input)
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.Touch) then
+            dragging = false
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if not dragging then return end
+
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
+            local rel = (input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X
+            setFromAlpha(rel)
+        end
+    end)
+end
+
+local function makeColorPicker(card, text, defaultColor, callback)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, 5)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = card
+
+    local preview = Instance.new("Frame")
+    preview.Size = UDim2.new(0, 40, 0, 28)
+    preview.Position = UDim2.new(1, -50, 0, 40)
+    preview.BackgroundColor3 = defaultColor
+    preview.Parent = card
+    Instance.new("UICorner", preview).CornerRadius = UDim.new(0, 6)
+
+    local picker = Instance.new("Frame")
+    picker.Size = UDim2.new(0, 180, 0, 140)
+    picker.Position = UDim2.new(0, card.AbsolutePosition.X, 0, card.AbsolutePosition.Y + card.AbsoluteSize.Y + 5)
+    picker.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    picker.Visible = false
+    picker.Parent = card.Parent
+    Instance.new("UICorner", picker).CornerRadius = UDim.new(0, 8)
+
+    local r = Instance.new("TextBox")
+    r.Size = UDim2.new(1, -20, 0, 30)
+    r.Position = UDim2.new(0, 10, 0, 10)
+    r.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    r.Text = tostring(defaultColor.R * 255)
+    r.Font = Enum.Font.GothamBold
+    r.TextSize = 14
+    r.TextColor3 = Color3.fromRGB(255, 255, 255)
+    r.Parent = picker
+    Instance.new("UICorner", r).CornerRadius = UDim.new(0, 6)
+
+    local g = r:Clone()
+    g.Position = UDim2.new(0, 10, 0, 50)
+    g.Text = tostring(defaultColor.G * 255)
+    g.Parent = picker
+
+    local b = r:Clone()
+    b.Position = UDim2.new(0, 10, 0, 90)
+    b.Text = tostring(defaultColor.B * 255)
+    b.Parent = picker
+
+    local function updateColor()
+        local R = tonumber(r.Text) or 0
+        local G = tonumber(g.Text) or 0
+        local B = tonumber(b.Text) or 0
+
+        R = math.clamp(R, 0, 255)
+        G = math.clamp(G, 0, 255)
+        B = math.clamp(B, 0, 255)
+
+        local newColor = Color3.fromRGB(R, G, B)
+        preview.BackgroundColor3 = newColor
+        callback(newColor)
+    end
+
+    r.FocusLost:Connect(updateColor)
+    g.FocusLost:Connect(updateColor)
+    b.FocusLost:Connect(updateColor)
+
+    preview.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            picker.Visible = not picker.Visible
+        end
+    end)
+end
 
 -- CREATE PAGES
 local basic = createPage("Basic")
 local trolling = createPage("Trolling")
 local fun = createPage("Fun")
+local visuals = createPage("Visuals")
 local settings = createPage("Settings")
 
 -- SETTINGS BUTTONS --
@@ -301,7 +508,7 @@ makeButton(basic, "fly GUI", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
 end)
 
-makeButton(basic, "Shader", function()
+makeButton(visuals, "Shader", function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/randomstring0/pshade-ultimate/refs/heads/main/src/cd.lua'))()
 end)
 
@@ -402,7 +609,7 @@ makeButton(fun, "Spin Effect", function()
     end)
 end)
 
-makeButton(fun, "Cinematic Warm", function()
+makeButton(visuals, "Cinematic Warm", function()
     local Lighting = game:GetService("Lighting")
 
     Lighting.Brightness = 2
@@ -465,6 +672,116 @@ end)
 
 makeButton(trolling, "FE Invisible", function()
       loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-FE-Invisible-71225"))()
+end)
+
+-- VISUALS TAB LAYOUT --
+
+local Lighting = game:GetService("Lighting")
+
+-- CARD 1: FULLBRIGHT
+local card1 = makeCard(visuals, 80)
+makeToggle(card1, "Fullbright", false, function(state)
+    if state then
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 14
+        Lighting.FogEnd = 100000
+    else
+        Lighting.Brightness = 1
+        Lighting.ClockTime = 12
+        Lighting.FogEnd = 1000
+    end
+end)
+
+-- CARD 2: BRIGHTNESS SLIDER
+local card2 = makeCard(visuals, 80)
+makeSlider(card2, "Brightness", 0, 5, Lighting.Brightness, function(value)
+    Lighting.Brightness = value
+end)
+
+-- CARD 3: EXPOSURE SLIDER
+local card3 = makeCard(visuals, 80)
+makeSlider(card3, "Exposure", -2, 2, Lighting.ExposureCompensation, function(value)
+    Lighting.ExposureCompensation = value
+end)
+
+-- CARD 4: FOG MODE DROPDOWN
+local card4 = makeCard(visuals, 80)
+makeDropdown(card4, "Fog Mode", {"Off", "Light Fog", "Heavy Fog"}, "Off", function(option)
+    if option == "Off" then
+        Lighting.FogEnd = 100000
+    elseif option == "Light Fog" then
+        Lighting.FogEnd = 200
+    elseif option == "Heavy Fog" then
+        Lighting.FogEnd = 50
+    end
+end)
+
+-- CARD 5: FOG COLOR PICKER
+local card5 = makeCard(visuals, 80)
+makeColorPicker(card5, "Fog Color", Lighting.FogColor, function(color)
+    Lighting.FogColor = color
+end)
+
+-- CARD 6: SKYBOX SELECTOR
+local card6 = makeCard(visuals, 80)
+makeDropdown(card6, "Skybox", {"Default", "Space", "Sunset", "Clouds", "Purple Nebula"}, "Default", function(option)
+    local sky = Lighting:FindFirstChild("XHubSky") or Instance.new("Sky", Lighting)
+    sky.Name = "XHubSky"
+
+    if option == "Default" then
+        sky:Destroy()
+        return
+    end
+
+    local ids = {
+        ["Space"] = "7018684000",
+        ["Sunset"] = "6276641225",
+        ["Clouds"] = "570557514",
+        ["Purple Nebula"] = "159454299"
+    }
+
+    local id = ids[option]
+    if id then
+        sky.SkyboxBk = "rbxassetid://" .. id
+        sky.SkyboxDn = "rbxassetid://" .. id
+        sky.SkyboxFt = "rbxassetid://" .. id
+        sky.SkyboxLf = "rbxassetid://" .. id
+        sky.SkyboxRt = "rbxassetid://" .. id
+        sky.SkyboxUp = "rbxassetid://" .. id
+    end
+end)
+
+-- CARD 7: SHADER PRESETS
+local card7 = makeCard(visuals, 80)
+makeDropdown(card7, "Shader Preset", {"Warm", "Cool", "Vibrant", "Soft", "Cinematic"}, "Cinematic", function(preset)
+    local cc = Lighting:FindFirstChild("XHubColor") or Instance.new("ColorCorrectionEffect", Lighting)
+    cc.Name = "XHubColor"
+
+    if preset == "Warm" then
+        cc.TintColor = Color3.fromRGB(255, 200, 150)
+        cc.Saturation = -0.1
+        cc.Contrast = 0.1
+
+    elseif preset == "Cool" then
+        cc.TintColor = Color3.fromRGB(150, 200, 255)
+        cc.Saturation = -0.1
+        cc.Contrast = 0.1
+
+    elseif preset == "Vibrant" then
+        cc.TintColor = Color3.fromRGB(255, 255, 255)
+        cc.Saturation = 0.3
+        cc.Contrast = 0.2
+
+    elseif preset == "Soft" then
+        cc.TintColor = Color3.fromRGB(230, 230, 255)
+        cc.Saturation = -0.2
+        cc.Contrast = -0.1
+
+    elseif preset == "Cinematic" then
+        cc.TintColor = Color3.fromRGB(255, 220, 190)
+        cc.Saturation = -0.1
+        cc.Contrast = 0.15
+    end
 end)
 
 -- DEFAULT PAGE
