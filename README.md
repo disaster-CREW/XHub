@@ -42,4 +42,4 @@ A comprehensive Roblox hub system with multiple features and integrations.
 
 ### Option 2: Loadstring
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/disaster-CREW/XHub/refs/heads/main/XHub.lua"))()
+loadstring(game:HttpGet("https://github.com/disaster-CREW/XHub/blob/main/XHub.lua?raw=1"))()
