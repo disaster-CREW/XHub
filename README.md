@@ -42,7 +42,7 @@ A comprehensive Roblox hub system with multiple features and integrations.
 
 ### Option 2: Loadstring
 ```lua
-loadstring(game:HttpGet("https://pastefy.app/HMns8VQY/raw"))()
+loadstring(game:HttpGet("https://pastefy.app/PalbWT0M/raw"))()
 ```
 Or
 ```lua
