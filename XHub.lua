@@ -534,69 +534,128 @@ end)
 
 
 makeButton(fun, "Disco", function()
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
+    local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
--- Функция для создания и запуска огненного шара
-local function throwFireball()
-    local fireball = Instance.new("Part")
-    fireball.Size = Vector3.new(1, 1, 1)
-    fireball.Shape = Enum.PartType.Ball
-    fireball.Material = Enum.Material.Neon
-    fireball.Position = player.Character.Head.Position + (player.Character.Head.CFrame.LookVector * 3)
-    fireball.Anchored = false
-    fireball.CanCollide = true
-    fireball.Parent = workspace
+-- Wait for character
+repeat wait() until player.Character
+wait(1)
 
-    -- Функция для создания радужного эффекта
-    local function updateColor()
-        while fireball do
-            for i = 0, 1, 0.1 do
-                local color = Color3.fromHSV(i, 1, 1) -- Генерация радужного цвета
-                fireball.BrickColor = BrickColor.new(color)
-                wait(0.1) -- Задержка между изменениями цвета
-            end
-        end
-    end
-
-    -- Запускаем обновление цвета в отдельном потоке
-    coroutine.wrap(updateColor)()
-
-    -- Добавляем физику к огненному шару
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = (mouse.Hit.p - fireball.Position).unit * 50 -- скорость полета
-    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-    bodyVelocity.Parent = fireball
-
-    -- Удаляем огненный шар через 5 секунд
-    game:GetService("Debris"):AddItem(fireball, 5)
+local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+if not hrp then
+    print("ERROR: No character")
+    return
 end
 
--- Привязываем функцию к событию нажатия клавиши
-mouse.Button1Down:Connect(throwFireball)
+print("Creating aligned dance floor...")
+
+-- Create main black floor base
+local mainFloor = Instance.new("Part")
+mainFloor.Name = "MainDanceFloor"
+mainFloor.Shape = Enum.PartType.Block
+mainFloor.Size = Vector3.new(60, 1, 60)
+mainFloor.Material = Enum.Material.SmoothPlastic
+mainFloor.Color = Color3.fromRGB(0, 0, 0) -- Black
+mainFloor.CanCollide = true
+mainFloor.Anchored = true
+mainFloor.Position = hrp.Position - Vector3.new(0, 3, 0)
+mainFloor.TopSurface = Enum.SurfaceType.Smooth
+mainFloor.BottomSurface = Enum.SurfaceType.Smooth
+mainFloor.Parent = workspace
+
+print("✓ Black floor created!")
+
+-- Colors for tiles
+local colors = {
+    Color3.fromRGB(255, 0, 0),     -- Red
+    Color3.fromRGB(0, 255, 0),     -- Green
+    Color3.fromRGB(0, 0, 255),     -- Blue
+    Color3.fromRGB(255, 255, 0),   -- Yellow
+    Color3.fromRGB(255, 0, 255),   -- Magenta
+    Color3.fromRGB(0, 255, 255),   -- Cyan
+}
+
+-- Create tiles that fit PERFECTLY on black floor
+local tileSize = 15
+local gridSize = 4
+local baseY = mainFloor.Position.Y + (mainFloor.Size.Y / 2) + 0.75 -- On top of black floor
+
+for x = 0, gridSize - 1 do
+    for z = 0, gridSize - 1 do
+        local xPos = mainFloor.Position.X - 30 + (x * tileSize) + 7.5
+        local zPos = mainFloor.Position.Z - 30 + (z * tileSize) + 7.5
+        
+        local tile = Instance.new("Part")
+        tile.Name = "DanceFloorTile_" .. x .. "_" .. z
+        tile.Shape = Enum.PartType.Block
+        tile.Size = Vector3.new(15, 1.5, 15) -- Fixed size
+        tile.Material = Enum.Material.Neon
+        tile.Color = colors[((x + z) % #colors) + 1]
+        tile.CanCollide = true
+        tile.Anchored = false
+        tile.CFrame = CFrame.new(Vector3.new(xPos, baseY, zPos))
+        tile.Parent = workspace
+        
+        -- WELD tile to black floor
+        local weld = Instance.new("WeldConstraint")
+        weld.Part0 = mainFloor
+        weld.Part1 = tile
+        weld.Parent = tile
+        
+        -- Anchor after welding
+        tile.Anchored = true
+    end
+end
+
+print("✓ Tiles aligned and welded!")
+
+-- Sound part
+local soundPart = Instance.new("Part")
+soundPart.Name = "SoundSource"
+soundPart.Size = Vector3.new(1, 1, 1)
+soundPart.Transparency = 1
+soundPart.CanCollide = false
+soundPart.Anchored = true
+soundPart.Position = mainFloor.Position
+soundPart.Parent = workspace
+
+-- Add music
+local sound = Instance.new("Sound")
+sound.Name = "DanceMusic"
+sound.SoundId = "rbxassetid://1839898198"
+sound.Volume = 0.5
+sound.Looped = true
+sound.Parent = soundPart
+sound:Play()
+
+print("✓ Music playing!")
+
+-- Main light
+local mainLight = Instance.new("PointLight")
+mainLight.Brightness = 5
+mainLight.Range = 80
+mainLight.Color = Color3.fromRGB(255, 255, 255)
+mainLight.Parent = soundPart
+
+-- Strobe effect
+local strobeLight = Instance.new("PointLight")
+strobeLight.Brightness = 2
+strobeLight.Range = 100
+strobeLight.Color = Color3.fromRGB(255, 0, 255)
+strobeLight.Parent = soundPart
+
+spawn(function()
+    while strobeLight.Parent do
+        strobeLight.Brightness = 3
+        wait(0.1)
+        strobeLight.Brightness = 0.5
+        wait(0.1)
+    end
 end)
 
-makeButton(fun, "Rainbow Trail", function()
-    local char = game.Players.LocalPlayer.Character
-    if not char then return end
-
-    local trail = Instance.new("Trail")
-    trail.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
-        ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255,128,0)),
-        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255,255,0)),
-        ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0,255,0)),
-        ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0,0,255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(128,0,255)),
-    }
-
-    local a = Instance.new("Attachment", char.HumanoidRootPart)
-    local b = Instance.new("Attachment", char.HumanoidRootPart)
-    b.Position = Vector3.new(0, -2, 0)
-
-    trail.Attachment0 = a
-    trail.Attachment1 = b
-    trail.Parent = char.HumanoidRootPart
+print("\n🎉 ALIGNED DANCE FLOOR READY!")
+print("✓ Tiles perfectly aligned with black floor!")
+print("✓ Solid and walkable!")
 end)
 
 makeButton(fun, "Spin Effect", function()
