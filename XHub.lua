@@ -547,9 +547,9 @@ if not hrp then
     return
 end
 
-print("Creating aligned dance floor...")
+print("Creating shared dance floor for everyone...")
 
--- Create main black floor base
+-- Create main black floor base in WORKSPACE (visible to all)
 local mainFloor = Instance.new("Part")
 mainFloor.Name = "MainDanceFloor"
 mainFloor.Shape = Enum.PartType.Block
@@ -561,9 +561,9 @@ mainFloor.Anchored = true
 mainFloor.Position = hrp.Position - Vector3.new(0, 3, 0)
 mainFloor.TopSurface = Enum.SurfaceType.Smooth
 mainFloor.BottomSurface = Enum.SurfaceType.Smooth
-mainFloor.Parent = workspace
+mainFloor.Parent = workspace -- PUBLIC - everyone sees it!
 
-print("✓ Black floor created!")
+print("✓ Black floor created for everyone!")
 
 -- Colors for tiles
 local colors = {
@@ -575,10 +575,10 @@ local colors = {
     Color3.fromRGB(0, 255, 255),   -- Cyan
 }
 
--- Create tiles that fit PERFECTLY on black floor
+-- Create tiles visible to EVERYONE
 local tileSize = 15
 local gridSize = 4
-local baseY = mainFloor.Position.Y + (mainFloor.Size.Y / 2) + 0.75 -- On top of black floor
+local baseY = mainFloor.Position.Y + (mainFloor.Size.Y / 2) + 0.75
 
 for x = 0, gridSize - 1 do
     for z = 0, gridSize - 1 do
@@ -588,13 +588,13 @@ for x = 0, gridSize - 1 do
         local tile = Instance.new("Part")
         tile.Name = "DanceFloorTile_" .. x .. "_" .. z
         tile.Shape = Enum.PartType.Block
-        tile.Size = Vector3.new(15, 1.5, 15) -- Fixed size
+        tile.Size = Vector3.new(15, 1.5, 15)
         tile.Material = Enum.Material.Neon
         tile.Color = colors[((x + z) % #colors) + 1]
         tile.CanCollide = true
         tile.Anchored = false
         tile.CFrame = CFrame.new(Vector3.new(xPos, baseY, zPos))
-        tile.Parent = workspace
+        tile.Parent = workspace -- PUBLIC - everyone sees it!
         
         -- WELD tile to black floor
         local weld = Instance.new("WeldConstraint")
@@ -607,9 +607,9 @@ for x = 0, gridSize - 1 do
     end
 end
 
-print("✓ Tiles aligned and welded!")
+print("✓ Tiles created for everyone!")
 
--- Sound part
+-- Sound part (public)
 local soundPart = Instance.new("Part")
 soundPart.Name = "SoundSource"
 soundPart.Size = Vector3.new(1, 1, 1)
@@ -617,7 +617,7 @@ soundPart.Transparency = 1
 soundPart.CanCollide = false
 soundPart.Anchored = true
 soundPart.Position = mainFloor.Position
-soundPart.Parent = workspace
+soundPart.Parent = workspace -- PUBLIC - everyone hears it!
 
 -- Add music
 local sound = Instance.new("Sound")
@@ -628,7 +628,7 @@ sound.Looped = true
 sound.Parent = soundPart
 sound:Play()
 
-print("✓ Music playing!")
+print("✓ Music playing for everyone!")
 
 -- Main light
 local mainLight = Instance.new("PointLight")
@@ -653,19 +653,10 @@ spawn(function()
     end
 end)
 
-print("\n🎉 ALIGNED DANCE FLOOR READY!")
-print("✓ Tiles perfectly aligned with black floor!")
-print("✓ Solid and walkable!")
-end)
-
-makeButton(fun, "Spin Effect", function()
-    local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
-    task.spawn(function()
-        while true do
-            hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(10), 0)
-            task.wait()
-        end
-    end)
+    print("\n🎉 SHARED DANCE FLOOR READY!")
+    print("✓ Everyone in the game can see it!")
+    print("✓ Everyone can hear the music!")
+    print("✓ Everyone can dance together!")
 end)
 
 makeButton(visuals, "Cinematic Warm", function()
