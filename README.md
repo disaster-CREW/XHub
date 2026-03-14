@@ -1,4 +1,4 @@
-# X Hub
+# XHub
 
 A comprehensive Roblox hub system with multiple features and integrations.
 
